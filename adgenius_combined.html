@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AdGenius — Meta Ads AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Epilogue:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080809;
+  --bg-surface: #0f0f11;
+  --bg-raised: #161618;
+  --bg-hover: #1e1e21;
+  --border: rgba(255,255,255,0.07);
+  --border-mid: rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.2);
+  --accent: #5b7fff;
+  --accent-glow: rgba(91,127,255,0.18);
+  --accent-hover: #7090ff;
+  --text-primary: #f2efea;
+  --text-secondary: rgba(242,239,234,0.55);
+  --text-muted: rgba(242,239,234,0.3);
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Epilogue', sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 0.5px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(8,8,9,0.92);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.logo-mark {
+  width: 26px;
+  height: 26px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: block;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.logo-mark::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: white;
+  border-radius: 3px;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.badge-meta {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(91,127,255,0.1);
+  color: #8aabff;
+  border: 0.5px solid rgba(91,127,255,0.25);
+}
+
+/* ===== STEPS NAV ===== */
+.steps-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 32px;
+  gap: 0;
+  border-bottom: 0.5px solid var(--border);
+  overflow-x: auto;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  border: 1.5px solid var(--border-mid);
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.step-circle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(91,127,255,0.15);
+}
+
+.step-circle.done {
+  background: rgba(91,127,255,0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.step-circle.done span { display: none; }
+.step-circle.done::after {
+  content: '';
+  display: block;
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.step-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.step-item.active .step-label { color: var(--text-primary); }
+
+.step-line {
+  width: 56px;
+  height: 1px;
+  background: var(--border-mid);
+  margin: 0 4px;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+  transition: background 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s ease;
+}
+
+.step-line.filled::after { transform: scaleX(1); }
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+/* ===== SCREEN SYSTEM ===== */
+.screen { display: none; }
+.screen.active { display: block; }
+
+.screen-header { margin-bottom: 36px; }
+
+.screen-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.screen-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  max-width: 560px;
+}
+
+/* ===== UPLOAD ZONE ===== */
+.upload-zone {
+  border: 1.5px dashed rgba(91,127,255,0.3);
+  border-radius: var(--radius-xl);
+  padding: 60px 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(91,127,255,0.02);
+  position: relative;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.upload-inner { pointer-events: none; }
+
+.upload-icon-wrap {
+  width: 56px;
+  height: 56px;
+  background: rgba(91,127,255,0.1);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  color: #8aabff;
+  transition: transform 0.2s;
+}
+
+.upload-zone:hover .upload-icon-wrap { transform: translateY(-3px); }
+
+.upload-zone h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.upload-zone p { font-size: 13px; color: var(--text-muted); }
+
+/* ===== FILE CARD ===== */
+.file-card {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  margin-top: 16px;
+}
+
+.file-card.visible { display: flex; }
+
+.file-card-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(91,127,255,0.1);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.file-card-info { flex: 1; min-width: 0; }
+
+.file-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.file-card-size { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+
+.progress-track {
+  background: var(--border);
+  border-radius: 4px;
+  height: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 3px;
+  background: var(--accent);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.file-card-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(34,197,94,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  opacity: 0;
+  transition: opacity 0.3s;
+  flex-shrink: 0;
+}
+
+.file-card-check.show { opacity: 1; }
+
+/* ===== CHAT ===== */
+.chat-container {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.chat-messages {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 420px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+
+.msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  animation: msgFadeIn 0.3s ease;
+}
+
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  flex-shrink: 0;
+}
+
+.msg.ai .msg-avatar { background: var(--accent); color: #fff; }
+.msg.user .msg-avatar { background: var(--bg-raised); color: var(--text-secondary); border: 0.5px solid var(--border-mid); }
+
+.msg-bubble {
+  padding: 11px 15px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  max-width: 82%;
+  word-break: break-word;
+}
+
+.msg.ai .msg-bubble {
+  background: var(--bg-raised);
+  border: 0.5px solid var(--border);
+  border-radius: 14px 14px 14px 4px;
+  color: var(--text-primary);
+}
+
+.msg.user .msg-bubble {
+  background: rgba(91,127,255,0.14);
+  border: 0.5px solid rgba(91,127,255,0.2);
+  border-radius: 14px 14px 4px 14px;
+  color: var(--text-primary);
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  padding: 5px 2px;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: typingBounce 1.3s ease infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.18s; }
+.typing-dot:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+.chat-input-wrap {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.chat-input-wrap textarea {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  padding: 13px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  outline: none;
+  resize: none;
+  max-height: 120px;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+}
+
+.chat-input-wrap textarea:focus { border-color: rgba(91,127,255,0.5); }
+.chat-input-wrap textarea::placeholder { color: var(--text-muted); }
+
+.btn-chat-send {
+  width: 46px;
+  height: 46px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-chat-send:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-chat-send:disabled { background: rgba(91,127,255,0.3); cursor: not-allowed; transform: none; }
+
+.generating-overlay {
+  display: none;
+  text-align: center;
+  padding: 32px;
+}
+
+.generating-overlay.visible { display: block; }
+
+.gen-spinner {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(91,127,255,0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 14px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.gen-text { font-size: 13px; color: var(--text-secondary); }
+
+/* ===== CAMPAIGN REVIEW CARD ===== */
+.campaign-card {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.campaign-card-header {
+  padding: 24px 28px 20px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.campaign-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.campaign-name-wrap h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.status-badge.paused {
+  background: rgba(245,158,11,0.1);
+  color: #fbbf24;
+  border: 0.5px solid rgba(245,158,11,0.25);
+}
+
+.campaign-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-chip {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--bg-raised);
+  border: 0.5px solid var(--border-mid);
+  color: var(--text-secondary);
+}
+
+.campaign-section {
+  padding: 20px 28px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.campaign-section:last-child { border-bottom: none; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.strategy-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* AD SETS */
+.adsets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--bg-raised);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.adset-info { flex: 1; }
+.adset-name { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; }
+.adset-detail { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+.adset-right { text-align: right; flex-shrink: 0; margin-left: 16px; }
+.adset-budget { font-size: 13px; color: var(--accent); font-weight: 500; }
+.adset-placement { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* COPY BLOCK */
+.copy-block {
+  background: var(--bg-raised);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.copy-headline {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.copy-body {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.copy-cta {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  background: var(--accent-glow);
+  border: 0.5px solid rgba(91,127,255,0.3);
+  border-radius: 20px;
+  color: #8aabff;
+  width: fit-content;
+}
+
+/* AUDIENCE */
+.audience-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.audience-tag {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  border: 0.5px solid var(--border-mid);
+  color: var(--text-secondary);
+}
+
+/* TECH GRID */
+.tech-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tech-item { display: flex; flex-direction: column; gap: 3px; }
+.tech-label { font-size: 11px; color: var(--text-muted); }
+.tech-value { font-size: 13.5px; color: var(--text-primary); }
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { background: rgba(91,127,255,0.3); cursor: not-allowed; transform: none; }
+.btn-primary.full-width { width: 100%; justify-content: center; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 20px;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: 14px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.btn-ghost:hover { color: var(--text-secondary); }
+
+/* ===== SCREEN ACTIONS ===== */
+.screen-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.review-actions { justify-content: flex-end; }
+
+/* ===== NOTICE BOX ===== */
+.notice-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  background: rgba(245,158,11,0.05);
+  border: 0.5px solid rgba(245,158,11,0.2);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: rgba(251,191,36,0.75);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.notice-box svg { flex-shrink: 0; margin-top: 1px; }
+.notice-box strong { color: #fbbf24; }
+
+/* ===== CREDENTIALS FORM ===== */
+.creds-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+.field-group .optional {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.field-group input {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.field-group input:focus { border-color: rgba(91,127,255,0.5); background: rgba(91,127,255,0.03); }
+.field-group input::placeholder { color: var(--text-muted); }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #f87171;
+  display: none;
+}
+
+.field-error.visible { display: block; }
+
+/* ===== SUCCESS SCREEN ===== */
+.success-wrap {
+  text-align: center;
+  padding: 56px 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.success-icon {
+  width: 72px;
+  height: 72px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  margin: 0 auto 28px;
+  animation: successPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes successPop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.success-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 14px;
+}
+
+.success-sub {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+.highlight-paused {
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-meta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  background: rgba(91,127,255,0.1);
+  border: 0.5px solid rgba(91,127,255,0.3);
+  border-radius: var(--radius-md);
+  color: #8aabff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-meta-link:hover { background: rgba(91,127,255,0.18); }
+
+/* ===== API KEY MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header { margin-bottom: 24px; }
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.modal-header p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+
+.modal-actions { margin-top: 20px; }
+
+.modal-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 14px;
+}
+
+.modal-note a { color: var(--accent); text-decoration: none; }
+.modal-note a:hover { text-decoration: underline; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .topbar { padding: 14px 20px; }
+  .main-content { padding: 32px 20px 60px; }
+  .screen-title { font-size: 26px; }
+  .tech-grid { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: 1fr; }
+  .step-line { width: 28px; }
+  .steps-nav { padding: 18px 16px; }
+  .review-actions { flex-direction: column-reverse; }
+  .review-actions .btn-primary,
+  .review-actions .btn-secondary { width: 100%; justify-content: center; }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="logo">
+      <span class="logo-mark"></span>
+      AdGenius
+    </div>
+    <div class="topbar-right">
+      <span class="badge-meta">Meta Ads AI</span>
+    </div>
+  </header>
+
+  <!-- STEP PROGRESS -->
+  <nav class="steps-nav" id="stepsNav">
+    <div class="step-item" data-step="1" id="stepItem1">
+      <div class="step-circle" id="stepCircle1"><span>1</span></div>
+      <div class="step-label">Criativo</div>
+    </div>
+    <div class="step-line" id="stepLine1"></div>
+    <div class="step-item" data-step="2" id="stepItem2">
+      <div class="step-circle" id="stepCircle2"><span>2</span></div>
+      <div class="step-label">Briefing IA</div>
+    </div>
+    <div class="step-line" id="stepLine2"></div>
+    <div class="step-item" data-step="3" id="stepItem3">
+      <div class="step-circle" id="stepCircle3"><span>3</span></div>
+      <div class="step-label">Revisão</div>
+    </div>
+    <div class="step-line" id="stepLine3"></div>
+    <div class="step-item" data-step="4" id="stepItem4">
+      <div class="step-circle" id="stepCircle4"><span>4</span></div>
+      <div class="step-label">Publicar</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ===== SCREEN 1: UPLOAD ===== -->
+    <section class="screen active" id="screen1">
+      <div class="screen-header">
+        <h1 class="screen-title">Envie seu criativo</h1>
+        <p class="screen-sub">Faça upload do vídeo ou imagem da sua campanha. A IA vai analisar e conduzir um briefing inteligente para montar a estratégia ideal.</p>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="video/*,image/*" hidden />
+        <div class="upload-inner">
+          <div class="upload-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <h3>Arraste ou clique para enviar</h3>
+          <p>MP4, MOV, AVI, JPG, PNG &middot; Até 500 MB</p>
+        </div>
+      </div>
+
+      <div class="file-card" id="fileCard">
+        <div class="file-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="2" width="20" height="20" rx="3"/>
+            <path d="M10 9l5 3-5 3V9z"/>
+          </svg>
+        </div>
+        <div class="file-card-info">
+          <div class="file-card-name" id="fileName">—</div>
+          <div class="file-card-size" id="fileSize">—</div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+        <div class="file-card-check" id="fileCheck">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="screen-actions">
+        <button class="btn-primary" id="btnGoStep2" disabled onclick="goToStep2()">
+          Continuar para briefing
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 2: AI CHAT ===== -->
+    <section class="screen" id="screen2">
+      <div class="screen-header">
+        <h1 class="screen-title">Briefing com IA</h1>
+        <p class="screen-sub">Responda as perguntas abaixo. A IA vai interpretar, aprofundar e transformar suas respostas em uma campanha robusta e estruturada.</p>
+      </div>
+
+      <div class="chat-container" id="chatContainer">
+        <div class="chat-messages" id="chatMessages"></div>
+      </div>
+
+      <div class="chat-input-wrap" id="chatInputWrap">
+        <textarea
+          id="chatInput"
+          placeholder="Digite sua resposta..."
+          rows="1"
+          onkeydown="handleChatKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="btn-chat-send" id="btnSend" onclick="sendMessage()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="generating-overlay" id="generatingOverlay">
+        <div class="gen-spinner"></div>
+        <div class="gen-text" id="genText">IA analisando e gerando campanha...</div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 3: REVIEW ===== -->
+    <section class="screen" id="screen3">
+      <div class="screen-header">
+        <h1 class="screen-title">Revise sua campanha</h1>
+        <p class="screen-sub">A IA gerou e otimizou a estrutura completa abaixo. Revise cada detalhe antes de publicar.</p>
+      </div>
+
+      <div class="campaign-card" id="campaignCard">
+
+        <div class="campaign-card-header">
+          <div class="campaign-name-wrap">
+            <h2 id="rv-name">—</h2>
+            <span class="status-badge paused">Pausada</span>
+          </div>
+          <div class="campaign-meta-row">
+            <span class="meta-chip" id="rv-objective">—</span>
+            <span class="meta-chip" id="rv-period">—</span>
+            <span class="meta-chip" id="rv-budget">—</span>
+          </div>
+        </div>
+
+        <div class="campaign-section">
+          <div class="section-label">Estratégia da campanha</div>
+          <p class="strategy-text" id="rv-strategy">—</p>
+        </div>
+
+        <div class="campaign-section">
+          <div class="section-label">Conjuntos de anúncios</div>
+          <div class="adsets-grid" id="rv-adsets"></div>
+        </div>
+
+        <div class="campaign-section">
+          <div class="section-label">Copy principal</div>
+          <div class="copy-block">
+            <div class="copy-headline" id="rv-headline">—</div>
+            <div class="copy-body" id="rv-body">—</div>
+            <div class="copy-cta" id="rv-cta">—</div>
+          </div>
+        </div>
+
+        <div class="campaign-section">
+          <div class="section-label">Público-alvo detalhado</div>
+          <div class="audience-tags" id="rv-audience"></div>
+        </div>
+
+        <div class="campaign-section">
+          <div class="section-label">Configurações técnicas</div>
+          <div class="tech-grid" id="rv-tech"></div>
+        </div>
+
+      </div>
+
+      <div class="screen-actions review-actions">
+        <button class="btn-secondary" onclick="goToRefinement()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Refinar com IA
+        </button>
+        <button class="btn-primary" onclick="goToStep4()">
+          Confirmar e publicar
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 4: CREDENTIALS ===== -->
+    <section class="screen" id="screen4">
+      <div class="screen-header">
+        <h1 class="screen-title">Conectar ao Meta Ads</h1>
+        <p class="screen-sub">Insira suas credenciais da API. A campanha será criada com status <strong>Pausada</strong> — nenhum valor cobrado até você ativar.</p>
+      </div>
+
+      <div class="notice-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Onde obter: <strong>Meta for Developers → Seu App → Tokens</strong> e <strong>Gerenciador de Negócios → Contas de Anúncios</strong>
+      </div>
+
+      <div class="creds-form">
+        <div class="field-group">
+          <label for="accessToken">Access Token</label>
+          <input type="password" id="accessToken" placeholder="EAAxxxxxxxxxxxxxx..." autocomplete="off" />
+          <span class="field-error" id="errToken">Token obrigatório</span>
+        </div>
+        <div class="field-group">
+          <label for="adAccountId">Ad Account ID</label>
+          <input type="text" id="adAccountId" placeholder="act_000000000000" />
+          <span class="field-error" id="errAccount">ID obrigatório</span>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label for="pixelId">Pixel ID <span class="optional">opcional</span></label>
+            <input type="text" id="pixelId" placeholder="000000000" />
+          </div>
+          <div class="field-group">
+            <label for="pageId">Page ID <span class="optional">opcional</span></label>
+            <input type="text" id="pageId" placeholder="000000000" />
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-actions">
+        <button class="btn-ghost" onclick="goToStep3()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Voltar e revisar
+        </button>
+        <button class="btn-primary" id="btnPublish" onclick="publishCampaign()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
+          Publicar campanha pausada
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== SUCCESS SCREEN ===== -->
+    <section class="screen" id="screenSuccess">
+      <div class="success-wrap">
+        <div class="success-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h2 class="success-title">Campanha criada!</h2>
+        <p class="success-sub">Sua campanha foi publicada no Meta Ads com status <span class="highlight-paused">Pausada</span>. Acesse o Gerenciador para ativá-la quando estiver pronto.</p>
+        <div class="success-actions">
+          <a class="btn-meta-link" href="https://business.facebook.com/adsmanager" target="_blank" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Abrir Gerenciador de Anúncios
+          </a>
+          <button class="btn-ghost" onclick="restartApp()">Criar nova campanha</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- API KEY MODAL -->
+  <div class="modal-overlay" id="apiKeyModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Chave da API do Claude</h3>
+        <p>Insira sua Anthropic API Key para ativar a IA no briefing. Ela fica salva apenas no seu navegador.</p>
+      </div>
+      <div class="field-group">
+        <label for="claudeApiKey">Anthropic API Key</label>
+        <input type="password" id="claudeApiKey" placeholder="sk-ant-api03-..." />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary full-width" onclick="saveApiKey()">Salvar e continuar</button>
+      </div>
+      <p class="modal-note">Obtenha em: <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a></p>
+    </div>
+  </div>
+
+  <script>
+/* ============================================================
+   AdGenius — app.js
+   Integração real com API do Claude (Anthropic) para briefing
+   e geração inteligente de campanha Meta Ads.
+   ============================================================ */
+
+// ── Estado global ──────────────────────────────────────────
+let currentStep = 1;
+let claudeApiKey = '';
+let uploadedFileName = '';
+let conversationHistory = [];
+let campaignData = null;
+let briefingComplete = false;
+let messageCount = 0;
+const MAX_QUESTIONS = 5;
+
+// ── Sistema de prompts ──────────────────────────────────────
+const SYSTEM_PROMPT = `Você é um especialista sênior em Meta Ads e performance marketing digital.
+Sua função é conduzir um briefing inteligente com o anunciante para criar uma campanha de alta performance.
+
+CONTEXTO: O usuário acabou de enviar um criativo audiovisual. Você vai fazer perguntas estratégicas, interpretar as respostas com profundidade de especialista, e ao final gerar uma campanha robusta e otimizada.
+
+REGRAS DO BRIEFING:
+1. Faça exatamente ${MAX_QUESTIONS} perguntas, uma por vez, de forma conversacional e estratégica.
+2. Antes de fazer a próxima pergunta, sempre INTERPRETE e VALIDE a resposta anterior — mostre que você está pensando como especialista (ex: "Com esse objetivo, a estratégia de lance ideal será CPA otimizado..." ou "Esse público tem uma boa janela de conversão de 7 dias, o que vai influenciar como configuramos o remarketing...").
+3. As perguntas devem cobrir: objetivo real da campanha, produto/serviço e proposta de valor, público-alvo e personas, orçamento e período, e landing page/URL de destino.
+4. Após a 5ª resposta, responda com a tag especial [BRIEFING_COMPLETE] e NÃO gere a campanha em texto ainda — apenas confirme que vai processar.
+
+PERGUNTAS SUGERIDAS (adapte ao contexto):
+1. Qual é o objetivo principal dessa campanha? (vendas, leads, tráfego, reconhecimento de marca, app installs?) E qual é o produto ou serviço sendo anunciado?
+2. Me fale sobre o seu público-alvo ideal: quem são, qual faixa etária, onde estão no Brasil (ou fora?), e quais são os principais interesses ou comportamentos desse público?
+3. Qual é o orçamento disponível para essa campanha — você prefere definir um orçamento diário ou total? E qual seria o investimento?
+4. Qual é o período de veiculação ideal? Tem alguma data especial, sazonalidade ou evento que devemos considerar?
+5. Qual é a URL de destino do anúncio (site, landing page, WhatsApp, app)? E você tem alguma copy ou mensagem principal em mente, ou prefere que eu sugira?
+
+Tom: profissional mas acessível, como um consultor de confiança.`;
+
+const CAMPAIGN_GENERATION_PROMPT = `Com base em todo o briefing realizado, gere agora uma campanha Meta Ads completa e otimizada em formato JSON. 
+
+IMPORTANTE: Você deve MELHORAR e EXPANDIR as informações fornecidas pelo cliente, aplicando seu conhecimento de especialista em Meta Ads. Não apenas copie o que foi dito — transforme em estratégia.
+
+Retorne APENAS o JSON, sem texto antes ou depois, sem markdown, sem blocos de código. Apenas o objeto JSON puro.
+
+Estrutura obrigatória:
+{
+  "campaign": {
+    "name": "nome profissional da campanha",
+    "objective": "CONVERSIONS | LINK_CLICKS | LEAD_GENERATION | BRAND_AWARENESS | VIDEO_VIEWS | POST_ENGAGEMENT | APP_INSTALLS",
+    "budget_type": "DAILY | LIFETIME",
+    "budget_value": "valor em reais formatado",
+    "period": "período formatado",
+    "start_date": "data de início sugerida",
+    "end_date": "data de fim sugerida",
+    "bidding_strategy": "estratégia de lance recomendada",
+    "strategy_explanation": "parágrafo explicando a estratégia geral da campanha de forma clara, com justificativas baseadas nos dados do briefing"
+  },
+  "adsets": [
+    {
+      "name": "nome do conjunto",
+      "audience_description": "descrição detalhada do público",
+      "age_min": 18,
+      "age_max": 65,
+      "genders": "TODOS | MASCULINO | FEMININO",
+      "interests": ["interesse1", "interesse2"],
+      "budget_share": "% do orçamento",
+      "placements": "Feed + Stories + Reels",
+      "optimization_goal": "objetivo de otimização",
+      "rationale": "por que esse segmento faz sentido"
+    }
+  ],
+  "creative": {
+    "headline": "título principal do anúncio (max 40 chars, impactante)",
+    "primary_text": "texto principal do anúncio (2-3 frases persuasivas, com gatilhos)",
+    "description": "descrição secundária",
+    "call_to_action": "SAIBA_MAIS | COMPRAR | CADASTRAR | BAIXAR | ENTRAR_EM_CONTATO | ASSISTIR_MAIS",
+    "cta_label": "texto do botão em português"
+  },
+  "audience_tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"],
+  "tech_settings": {
+    "pixel_events": "eventos de pixel recomendados",
+    "attribution_window": "janela de atribuição recomendada",
+    "frequency_cap": "limite de frequência sugerido",
+    "ab_test_suggestion": "sugestão de teste A/B"
+  }
+}`;
+
+// ── Init ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  claudeApiKey = localStorage.getItem('adgenius_claude_key') || '';
+  setupUploadZone();
+});
+
+// ── Upload ──────────────────────────────────────────────────
+function setupUploadZone() {
+  const zone = document.getElementById('uploadZone');
+  const input = document.getElementById('fileInput');
+
+  zone.addEventListener('click', () => input.click());
+
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  input.addEventListener('change', () => {
+    if (input.files[0]) handleFile(input.files[0]);
+  });
+}
+
+function handleFile(file) {
+  uploadedFileName = file.name;
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = sizeMB + ' MB';
+  document.getElementById('fileCard').classList.add('visible');
+
+  // Simula progresso de upload
+  let progress = 0;
+  const fill = document.getElementById('progressFill');
+  const check = document.getElementById('fileCheck');
+  const btn = document.getElementById('btnGoStep2');
+
+  const iv = setInterval(() => {
+    progress += Math.random() * 15 + 5;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(iv);
+      check.classList.add('show');
+      btn.disabled = false;
+    }
+    fill.style.width = Math.min(progress, 100).toFixed(0) + '%';
+  }, 100);
+}
+
+// ── Navegação entre steps ───────────────────────────────────
+function goToStep(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+  if (n === 'success') {
+    document.getElementById('screenSuccess').classList.add('active');
+    return;
+  }
+
+  document.getElementById('screen' + n).classList.add('active');
+  currentStep = n;
+  updateStepsNav(n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStepsNav(n) {
+  for (let i = 1; i <= 4; i++) {
+    const circle = document.getElementById('stepCircle' + i);
+    const item   = document.getElementById('stepItem' + i);
+    const line   = document.getElementById('stepLine' + i);
+
+    circle.className = 'step-circle';
+    item.classList.remove('active');
+
+    if (i < n) {
+      circle.classList.add('done');
+      if (line) line.classList.add('filled');
+    } else if (i === n) {
+      circle.classList.add('active');
+      item.classList.add('active');
+    } else {
+      if (line) line.classList.remove('filled');
+    }
+  }
+}
+
+function goToStep2() {
+  if (!claudeApiKey) {
+    openApiKeyModal(() => {
+      goToStep(2);
+      initChat();
+    });
+  } else {
+    goToStep(2);
+    initChat();
+  }
+}
+
+function goToStep3() { goToStep(3); }
+function goToStep4() { goToStep(4); }
+function goToRefinement() {
+  goToStep(2);
+  briefingComplete = false;
+  addMessage('ai', 'Claro! O que você gostaria de ajustar ou aprofundar na campanha? Pode me dizer o que não ficou certo ou o que quer melhorar.');
+}
+
+// ── Modal API Key ───────────────────────────────────────────
+let _onApiKeySaved = null;
+
+function openApiKeyModal(callback) {
+  _onApiKeySaved = callback;
+  document.getElementById('apiKeyModal').classList.add('open');
+}
+
+function saveApiKey() {
+  const key = document.getElementById('claudeApiKey').value.trim();
+  if (!key.startsWith('sk-ant')) {
+    alert('Chave inválida. Deve começar com sk-ant...');
+    return;
+  }
+  claudeApiKey = key;
+  localStorage.setItem('adgenius_claude_key', key);
+  document.getElementById('apiKeyModal').classList.remove('open');
+  if (_onApiKeySaved) _onApiKeySaved();
+}
+
+// ── Chat ────────────────────────────────────────────────────
+function initChat() {
+  conversationHistory = [];
+  messageCount = 0;
+  briefingComplete = false;
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('generatingOverlay').classList.remove('visible');
+  document.getElementById('chatInputWrap').style.display = 'flex';
+
+  const firstMsg = `Olá! Vi que você enviou o criativo "${uploadedFileName || 'seu arquivo'}". Vou te fazer algumas perguntas estratégicas para montar uma campanha de alta performance no Meta Ads.
+
+Vamos começar pelo mais importante: **qual é o objetivo principal dessa campanha?** Por exemplo: gerar vendas, captar leads, aumentar tráfego para o site, reconhecimento de marca, instalar um app... E qual produto ou serviço está sendo anunciado?`;
+
+  addMessage('ai', firstMsg);
+  conversationHistory.push({ role: 'assistant', content: firstMsg });
+}
+
+function addMessage(role, text) {
+  const area = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = 'msg ' + role;
+
+  const av  = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.textContent = role === 'ai' ? 'AI' : 'Eu';
+
+  const bub = document.createElement('div');
+  bub.className = 'msg-bubble';
+  bub.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+
+  div.appendChild(av);
+  div.appendChild(bub);
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function showTyping() {
+  const area = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typingMsg';
+  div.innerHTML = `<div class="msg-avatar">AI</div>
+    <div class="msg-bubble">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingMsg');
+  if (t) t.remove();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+async function sendMessage() {
+  if (briefingComplete) return;
+
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMessage('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+  messageCount++;
+
+  document.getElementById('btnSend').disabled = true;
+  showTyping();
+
+  try {
+    const response = await callClaude(conversationHistory);
+    removeTyping();
+
+    if (response.includes('[BRIEFING_COMPLETE]')) {
+      const cleanResponse = response.replace('[BRIEFING_COMPLETE]', '').trim();
+      addMessage('ai', cleanResponse || 'Perfeito! Recebi todas as informações. Vou gerar sua campanha agora...');
+      conversationHistory.push({ role: 'assistant', content: cleanResponse });
+      briefingComplete = true;
+
+      document.getElementById('chatInputWrap').style.display = 'none';
+      await generateCampaign();
+    } else {
+      addMessage('ai', response);
+      conversationHistory.push({ role: 'assistant', content: response });
+      document.getElementById('btnSend').disabled = false;
+    }
+  } catch (err) {
+    removeTyping();
+    addMessage('ai', '⚠️ Erro ao conectar com a IA. Verifique sua chave da API e tente novamente.');
+    document.getElementById('btnSend').disabled = false;
+    console.error('Claude API error:', err);
+  }
+}
+
+// ── Chamada à API do Claude ─────────────────────────────────
+async function callClaude(messages, systemOverride) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': claudeApiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: systemOverride || SYSTEM_PROMPT,
+      messages
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'API error ' + res.status);
+  }
+
+  const data = await res.json();
+  return data.content.map(b => b.text || '').join('');
+}
+
+// ── Geração da campanha ─────────────────────────────────────
+async function generateCampaign() {
+  const overlay = document.getElementById('generatingOverlay');
+  const genText = document.getElementById('genText');
+  overlay.classList.add('visible');
+
+  const loadingSteps = [
+    'Analisando o briefing com IA...',
+    'Identificando o público-alvo ideal...',
+    'Otimizando estrutura de ad sets...',
+    'Gerando copy persuasiva...',
+    'Montando configurações técnicas...'
+  ];
+
+  let i = 0;
+  const iv = setInterval(() => {
+    genText.textContent = loadingSteps[i % loadingSteps.length];
+    i++;
+  }, 1400);
+
+  try {
+    // Monta prompt com histórico do briefing
+    const briefingMessages = [
+      ...conversationHistory,
+      {
+        role: 'user',
+        content: CAMPAIGN_GENERATION_PROMPT
+      }
+    ];
+
+    const rawJson = await callClaude(briefingMessages, `Você é um especialista em Meta Ads. Com base no briefing fornecido, gere uma campanha JSON otimizada. Retorne APENAS o JSON puro, sem markdown, sem explicações fora do JSON.`);
+
+    clearInterval(iv);
+
+    // Parse robusto do JSON
+    let parsed;
+    try {
+      const clean = rawJson
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
+      parsed = JSON.parse(clean);
+    } catch (e) {
+      // Tenta extrair JSON do texto
+      const match = rawJson.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+      else throw new Error('JSON inválido retornado pela IA');
+    }
+
+    campaignData = parsed;
+    overlay.classList.remove('visible');
+    populateReviewScreen(parsed);
+    goToStep(3);
+
+  } catch (err) {
+    clearInterval(iv);
+    overlay.classList.remove('visible');
+    addMessage('ai', '⚠️ Erro ao gerar a campanha: ' + err.message + '. Tente refinar o briefing.');
+    document.getElementById('chatInputWrap').style.display = 'flex';
+    briefingComplete = false;
+    document.getElementById('btnSend').disabled = false;
+    console.error('Generation error:', err);
+  }
+}
+
+// ── Preencher tela de revisão ───────────────────────────────
+function populateReviewScreen(data) {
+  const c = data.campaign;
+
+  document.getElementById('rv-name').textContent     = c.name || '—';
+  document.getElementById('rv-objective').textContent = formatObjective(c.objective);
+  document.getElementById('rv-period').textContent    = c.period || '—';
+  document.getElementById('rv-budget').textContent    = (c.budget_type === 'DAILY' ? 'R$/dia: ' : 'Total: ') + (c.budget_value || '—');
+  document.getElementById('rv-strategy').textContent  = c.strategy_explanation || '—';
+
+  // Ad sets
+  const adsetsList = document.getElementById('rv-adsets');
+  adsetsList.innerHTML = '';
+  (data.adsets || []).forEach(as => {
+    const div = document.createElement('div');
+    div.className = 'adset-item';
+    div.innerHTML = `
+      <div class="adset-info">
+        <div class="adset-name">${as.name}</div>
+        <div class="adset-detail">${as.audience_description}${as.rationale ? ' · ' + as.rationale : ''}</div>
+      </div>
+      <div class="adset-right">
+        <div class="adset-budget">${as.budget_share || '—'}</div>
+        <div class="adset-placement">${as.placements || '—'}</div>
+      </div>`;
+    adsetsList.appendChild(div);
+  });
+
+  // Copy
+  const cr = data.creative || {};
+  document.getElementById('rv-headline').textContent = cr.headline || '—';
+  document.getElementById('rv-body').textContent     = cr.primary_text || '—';
+  document.getElementById('rv-cta').textContent      = cr.cta_label || cr.call_to_action || '—';
+
+  // Audience tags
+  const tagsEl = document.getElementById('rv-audience');
+  tagsEl.innerHTML = '';
+  (data.audience_tags || []).forEach(tag => {
+    const span = document.createElement('span');
+    span.className = 'audience-tag';
+    span.textContent = tag;
+    tagsEl.appendChild(span);
+  });
+
+  // Tech settings
+  const tech = data.tech_settings || {};
+  const techEl = document.getElementById('rv-tech');
+  const techItems = [
+    { label: 'Estratégia de lance',    value: c.bidding_strategy },
+    { label: 'Janela de atribuição',   value: tech.attribution_window },
+    { label: 'Eventos de pixel',       value: tech.pixel_events },
+    { label: 'Frequência máx.',        value: tech.frequency_cap },
+    { label: 'Teste A/B sugerido',     value: tech.ab_test_suggestion },
+    { label: 'Início sugerido',        value: c.start_date }
+  ];
+  techEl.innerHTML = techItems.map(item => `
+    <div class="tech-item">
+      <span class="tech-label">${item.label}</span>
+      <span class="tech-value">${item.value || '—'}</span>
+    </div>`).join('');
+}
+
+function formatObjective(obj) {
+  const map = {
+    CONVERSIONS:       'Conversões',
+    LINK_CLICKS:       'Tráfego / Cliques',
+    LEAD_GENERATION:   'Geração de Leads',
+    BRAND_AWARENESS:   'Reconhecimento de Marca',
+    VIDEO_VIEWS:       'Visualizações de Vídeo',
+    POST_ENGAGEMENT:   'Engajamento',
+    APP_INSTALLS:      'Instalações de App'
+  };
+  return map[obj] || obj || '—';
+}
+
+// ── Publicar no Meta ────────────────────────────────────────
+async function publishCampaign() {
+  const token   = document.getElementById('accessToken').value.trim();
+  const account = document.getElementById('adAccountId').value.trim();
+
+  document.getElementById('errToken').classList.remove('visible');
+  document.getElementById('errAccount').classList.remove('visible');
+
+  let valid = true;
+  if (!token)   { document.getElementById('errToken').classList.add('visible');   valid = false; }
+  if (!account) { document.getElementById('errAccount').classList.add('visible'); valid = false; }
+  if (!valid) return;
+
+  const btn = document.getElementById('btnPublish');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="gen-spinner" style="width:18px;height:18px;border-width:2px;margin:0"></div> Publicando...`;
+
+  try {
+    await createMetaCampaign(token, account);
+    goToStep('success');
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg> Publicar campanha pausada`;
+    alert('Erro ao publicar: ' + err.message + '\n\nVerifique seu Access Token e Ad Account ID.');
+    console.error('Meta API error:', err);
+  }
+}
+
+async function createMetaCampaign(token, adAccountId) {
+  if (!campaignData) throw new Error('Dados da campanha não encontrados.');
+
+  const c = campaignData.campaign;
+  const accountId = adAccountId.startsWith('act_') ? adAccountId : 'act_' + adAccountId;
+  const baseUrl = `https://graph.facebook.com/v19.0`;
+
+  // 1. Criar Campanha
+  const campaignRes = await fetch(`${baseUrl}/${accountId}/campaigns`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: c.name,
+      objective: c.objective,
+      status: 'PAUSED',
+      special_ad_categories: [],
+      access_token: token
+    })
+  });
+
+  const campaignJson = await campaignRes.json();
+  if (campaignJson.error) throw new Error(campaignJson.error.message);
+  const campaignId = campaignJson.id;
+
+  // 2. Criar Ad Sets
+  const adsets = campaignData.adsets || [];
+  const pixelId = document.getElementById('pixelId').value.trim() || null;
+
+  for (const adset of adsets) {
+    const adsetBody = {
+      name: adset.name,
+      campaign_id: campaignId,
+      status: 'PAUSED',
+      optimization_goal: adset.optimization_goal || 'LINK_CLICKS',
+      billing_event: 'IMPRESSIONS',
+      bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+      daily_budget: Math.round((parseFloat((c.budget_value || '100').replace(/[^\d.]/g, '')) / (adsets.length || 1)) * 100),
+      targeting: {
+        age_min: adset.age_min || 18,
+        age_max: adset.age_max || 65,
+        geo_locations: { countries: ['BR'] },
+        flexible_spec: adset.interests?.length
+          ? [{ interests: adset.interests.map((_, idx) => ({ id: String(6003107902433 + idx), name: _ })) }]
+          : undefined
+      },
+      access_token: token
+    };
+
+    if (pixelId) {
+      adsetBody.promoted_object = { pixel_id: pixelId, custom_event_type: 'PURCHASE' };
+    }
+
+    const adsetRes  = await fetch(`${baseUrl}/${accountId}/adsets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(adsetBody)
+    });
+
+    const adsetJson = await adsetRes.json();
+    if (adsetJson.error) console.warn('Ad set error:', adsetJson.error.message);
+  }
+
+  return campaignId;
+}
+
+// ── Reiniciar ───────────────────────────────────────────────
+function restartApp() {
+  currentStep        = 1;
+  conversationHistory = [];
+  campaignData       = null;
+  briefingComplete   = false;
+  messageCount       = 0;
+  uploadedFileName   = '';
+
+  document.getElementById('fileCard').classList.remove('visible');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('fileCheck').classList.remove('show');
+  document.getElementById('btnGoStep2').disabled = true;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('accessToken').value = '';
+  document.getElementById('adAccountId').value = '';
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('generatingOverlay').classList.remove('visible');
+  document.getElementById('chatInputWrap').style.display = 'flex';
+  document.getElementById('btnSend').disabled = false;
+
+  goToStep(1);
+}
+
+</script>
+</body>
+</html>
