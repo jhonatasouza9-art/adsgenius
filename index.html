@@ -1605,55 +1605,76 @@ async function callGeminiJson(briefingText) {
   const models = ['gemini-2.5-flash', 'gemini-2.5-pro'];
   let lastError = null;
 
-  const prompt = `Você é um especialista sênior em Meta Ads.
+  // Prompt limpo — sem JSON no corpo para não confundir o modelo
+  const prompt = `Você é um especialista sênior em Meta Ads e performance marketing.
 
-Abaixo está um briefing de campanha coletado em conversa com o cliente:
-
+BRIEFING COLETADO:
 ${briefingText}
 
-Com base nesse briefing, gere uma campanha Meta Ads completa, otimizada e estratégica.
-MELHORE e EXPANDA as informações — aplique conhecimento especializado, não copie as respostas.
+TAREFA: Com base nesse briefing, crie uma campanha Meta Ads completa e otimizada.
+Melhore e expanda as informações aplicando seu conhecimento especializado.
+Preencha TODOS os campos com dados reais e relevantes para o produto/serviço descrito.`;
 
-Retorne APENAS um objeto JSON válido com exatamente esta estrutura:
-
-{
-  "campaign": {
-    "name": "nome profissional da campanha",
-    "objective": "CONVERSIONS",
-    "budget_type": "DAILY",
-    "budget_value": "R$ 100/dia",
-    "period": "30 dias",
-    "start_date": "01/04/2025",
-    "bidding_strategy": "Menor custo (CPA automático)",
-    "strategy_explanation": "Explicação estratégica da campanha em 2-3 frases"
-  },
-  "adsets": [
-    {
-      "name": "Público Principal",
-      "audience_description": "Descrição do público",
-      "age_min": 25,
-      "age_max": 50,
-      "interests": ["interesse1", "interesse2"],
-      "budget_share": "50%",
-      "placements": "Feed + Stories + Reels",
-      "optimization_goal": "CONVERSIONS",
-      "rationale": "Por que esse segmento vai converter"
-    }
-  ],
-  "creative": {
-    "headline": "Headline impactante",
-    "primary_text": "Texto persuasivo do anúncio com gatilhos emocionais.",
-    "call_to_action": "LEARN_MORE",
-    "cta_label": "Saiba Mais"
-  },
-  "audience_tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "tech_settings": {
-    "pixel_events": "Purchase, Lead",
-    "attribution_window": "7 dias após clique",
-    "frequency_cap": "3x por semana",
-    "ab_test_suggestion": "Testar headline A vs B"
-  }
-}`;
+  // Schema que o Gemini 2.5 usa para garantir JSON estruturado
+  const responseSchema = {
+    type: "OBJECT",
+    properties: {
+      campaign: {
+        type: "OBJECT",
+        properties: {
+          name:                 { type: "STRING" },
+          objective:            { type: "STRING" },
+          budget_type:          { type: "STRING" },
+          budget_value:         { type: "STRING" },
+          period:               { type: "STRING" },
+          start_date:           { type: "STRING" },
+          bidding_strategy:     { type: "STRING" },
+          strategy_explanation: { type: "STRING" }
+        },
+        required: ["name","objective","budget_type","budget_value","period","bidding_strategy","strategy_explanation"]
+      },
+      adsets: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            name:                 { type: "STRING" },
+            audience_description: { type: "STRING" },
+            age_min:              { type: "INTEGER" },
+            age_max:              { type: "INTEGER" },
+            interests:            { type: "ARRAY", items: { type: "STRING" } },
+            budget_share:         { type: "STRING" },
+            placements:           { type: "STRING" },
+            optimization_goal:    { type: "STRING" },
+            rationale:            { type: "STRING" }
+          },
+          required: ["name","audience_description","age_min","age_max","budget_share","placements","optimization_goal","rationale"]
+        }
+      },
+      creative: {
+        type: "OBJECT",
+        properties: {
+          headline:        { type: "STRING" },
+          primary_text:    { type: "STRING" },
+          call_to_action:  { type: "STRING" },
+          cta_label:       { type: "STRING" }
+        },
+        required: ["headline","primary_text","call_to_action","cta_label"]
+      },
+      audience_tags: { type: "ARRAY", items: { type: "STRING" } },
+      tech_settings: {
+        type: "OBJECT",
+        properties: {
+          pixel_events:       { type: "STRING" },
+          attribution_window: { type: "STRING" },
+          frequency_cap:      { type: "STRING" },
+          ab_test_suggestion: { type: "STRING" }
+        },
+        required: ["pixel_events","attribution_window","frequency_cap","ab_test_suggestion"]
+      }
+    },
+    required: ["campaign","adsets","creative","audience_tags","tech_settings"]
+  };
 
   for (const model of models) {
     try {
@@ -1662,9 +1683,10 @@ Retorne APENAS um objeto JSON válido com exatamente esta estrutura:
       const body = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 3000,
-          responseMimeType: 'application/json'
+          temperature: 0.5,
+          maxOutputTokens: 4096,
+          responseMimeType: 'application/json',
+          responseSchema
         }
       };
 
@@ -1685,7 +1707,11 @@ Retorne APENAS um objeto JSON válido com exatamente esta estrutura:
       }
 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('Resposta vazia do Gemini');
+      if (!text) {
+        // Pode estar em formato comprimido
+        const alt = JSON.stringify(data.candidates?.[0]?.content);
+        throw new Error('Resposta vazia. Raw: ' + alt?.slice(0,200));
+      }
       return text;
 
     } catch (err) {
