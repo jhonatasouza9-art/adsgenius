@@ -886,6 +886,21 @@ body {
 
 .btn-meta-link:hover { background: rgba(91,127,255,0.18); }
 
+.fb-login-section { margin-bottom: 28px; }
+.fb-app-id-row { display:flex; gap:10px; align-items:flex-end; margin-bottom:20px; }
+.fb-app-id-row .field-group { flex:1; }
+.fb-app-id-row .btn-sm { padding:10px 16px; font-size:13px; white-space:nowrap; height:44px; background:var(--accent); color:#fff; border:none; border-radius:var(--r-md); cursor:pointer; font-family:var(--font-body); transition:background .2s; }
+.fb-app-id-row .btn-sm:hover { background:var(--accent-hover); }
+.btn-fb-login { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:14px; background:#1877f2; color:#fff; border:none; border-radius:var(--r-md); font-size:15px; font-weight:600; font-family:var(--font-display); cursor:pointer; transition:background .2s; margin-bottom:16px; }
+.btn-fb-login:hover { background:#166fe5; }
+.btn-fb-login:disabled { background:rgba(24,119,242,.4); cursor:not-allowed; }
+.fb-login-status { font-size:13px; color:var(--text-muted); text-align:center; margin-bottom:20px; }
+.fb-login-status.ok { color:var(--success); }
+.fb-login-status.err { color:#f87171; }
+.account-selector { background:var(--bg-surface); border:.5px solid var(--border-mid); border-radius:var(--r-md); padding:12px 16px; font-size:14px; color:var(--text-primary); font-family:var(--font-body); outline:none; width:100%; margin-top:4px; }
+.divider-or { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--text-muted); font-size:12px; }
+.divider-or::before,.divider-or::after { content:''; flex:1; height:.5px; background:var(--border-mid); }
+
 /* ===== API KEY MODAL ===== */
 .modal-overlay {
   display: none;
@@ -954,6 +969,13 @@ body {
 }
 
 </style>
+  <!-- Facebook SDK -->
+  <script>
+    window.fbAsyncInit = function() {
+      FB.init({ appId: window._fbAppId || '', cookie: true, xfbml: false, version: 'v21.0' });
+    };
+  </script>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/pt_BR/sdk.js"></script>
 </head>
 <body>
 
@@ -1143,14 +1165,34 @@ body {
     <section class="screen" id="screen4">
       <div class="screen-header">
         <h1 class="screen-title">Conectar ao Meta Ads</h1>
-        <p class="screen-sub">Insira suas credenciais da API. A campanha será criada com status <strong>Pausada</strong> — nenhum valor cobrado até você ativar.</p>
+        <p class="screen-sub">Faça login com o Facebook para conectar sua conta de anúncios automaticamente — sem copiar tokens manualmente.</p>
       </div>
 
-      <div class="notice-box">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Onde obter: <strong>Meta for Developers → Seu App → Tokens</strong> e <strong>Gerenciador de Negócios → Contas de Anúncios</strong>
+      <!-- OPÇÃO 1: Login com Facebook -->
+      <div class="fb-login-section">
+        <div class="fb-app-id-row">
+          <div class="field-group">
+            <label for="fbAppId">Meta App ID <span class="optional">do seu App em developers.facebook.com</span></label>
+            <input type="text" id="fbAppId" placeholder="000000000000000" oninput="initFBSDK()" />
+          </div>
+          <button class="btn-sm" onclick="initFBSDK()">Aplicar</button>
+        </div>
+
+        <button class="btn-fb-login" id="btnFbLogin" onclick="loginFacebook()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+          Entrar com Facebook
+        </button>
+        <div class="fb-login-status" id="fbLoginStatus">Insira o App ID e clique em "Entrar com Facebook"</div>
+
+        <div class="field-group" id="accountSelectorWrap" style="display:none">
+          <label>Conta de anúncios</label>
+          <select class="account-selector" id="accountSelector" onchange="onAccountSelect(this.value)"></select>
+        </div>
       </div>
 
+      <div class="divider-or">ou insira manualmente</div>
+
+      <!-- OPÇÃO 2: Manual -->
       <div class="creds-form">
         <div class="field-group">
           <label for="accessToken">Access Token</label>
@@ -1880,6 +1922,98 @@ function formatObjective(obj) {
 }
 
 // ── Publicar no Meta ────────────────────────────────────────
+// ── Facebook Login ───────────────────────────────────────────
+function initFBSDK() {
+  const appId = document.getElementById('fbAppId').value.trim();
+  if (!appId) return;
+  window._fbAppId = appId;
+  if (typeof FB !== 'undefined') {
+    FB.init({ appId, cookie: true, xfbml: false, version: 'v21.0' });
+    document.getElementById('fbLoginStatus').textContent = 'App ID aplicado. Clique em "Entrar com Facebook".';
+  } else {
+    document.getElementById('fbLoginStatus').textContent = 'SDK ainda carregando, tente novamente em 2s.';
+  }
+}
+
+function loginFacebook() {
+  if (typeof FB === 'undefined') {
+    document.getElementById('fbLoginStatus').textContent = 'SDK do Facebook não carregou. Verifique sua conexão.';
+    document.getElementById('fbLoginStatus').className = 'fb-login-status err';
+    return;
+  }
+  const appId = document.getElementById('fbAppId').value.trim();
+  if (!appId) {
+    document.getElementById('fbLoginStatus').textContent = 'Insira o App ID primeiro.';
+    document.getElementById('fbLoginStatus').className = 'fb-login-status err';
+    return;
+  }
+  FB.init({ appId, cookie: true, xfbml: false, version: 'v21.0' });
+
+  document.getElementById('btnFbLogin').disabled = true;
+  document.getElementById('fbLoginStatus').textContent = 'Abrindo login do Facebook...';
+  document.getElementById('fbLoginStatus').className = 'fb-login-status';
+
+  FB.login(function(response) {
+    document.getElementById('btnFbLogin').disabled = false;
+    if (response.authResponse) {
+      const token = response.authResponse.accessToken;
+      document.getElementById('accessToken').value = token;
+      document.getElementById('fbLoginStatus').textContent = '✓ Login realizado! Carregando suas contas de anúncio...';
+      document.getElementById('fbLoginStatus').className = 'fb-login-status ok';
+      loadAdAccounts(token);
+    } else {
+      document.getElementById('fbLoginStatus').textContent = 'Login cancelado ou negado.';
+      document.getElementById('fbLoginStatus').className = 'fb-login-status err';
+    }
+  }, { scope: 'ads_management,ads_read,business_management' });
+}
+
+async function loadAdAccounts(token) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status&access_token=${token}`);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error.message);
+
+    const accounts = data.data || [];
+    if (!accounts.length) {
+      document.getElementById('fbLoginStatus').textContent = 'Nenhuma conta de anúncios encontrada para esse usuário.';
+      document.getElementById('fbLoginStatus').className = 'fb-login-status err';
+      return;
+    }
+
+    const sel = document.getElementById('accountSelector');
+    sel.innerHTML = '<option value="">Selecione uma conta...</option>';
+    accounts.forEach(acc => {
+      const opt = document.createElement('option');
+      opt.value = acc.id;
+      opt.textContent = `${acc.name} (${acc.id})`;
+      sel.appendChild(opt);
+    });
+
+    // Se só tem uma conta, seleciona automaticamente
+    if (accounts.length === 1) {
+      sel.value = accounts[0].id;
+      onAccountSelect(accounts[0].id);
+    }
+
+    document.getElementById('accountSelectorWrap').style.display = 'block';
+    document.getElementById('fbLoginStatus').textContent = `✓ ${accounts.length} conta(s) encontrada(s). Selecione abaixo.`;
+    document.getElementById('fbLoginStatus').className = 'fb-login-status ok';
+
+  } catch (err) {
+    document.getElementById('fbLoginStatus').textContent = 'Erro ao carregar contas: ' + err.message;
+    document.getElementById('fbLoginStatus').className = 'fb-login-status err';
+  }
+}
+
+function onAccountSelect(accountId) {
+  if (!accountId) return;
+  document.getElementById('adAccountId').value = accountId;
+  document.getElementById('fbLoginStatus').textContent = `✓ Conta selecionada: ${accountId}`;
+  document.getElementById('fbLoginStatus').className = 'fb-login-status ok';
+}
+
 async function publishCampaign() {
   const token   = document.getElementById('accessToken').value.trim();
   const account = document.getElementById('adAccountId').value.trim();
