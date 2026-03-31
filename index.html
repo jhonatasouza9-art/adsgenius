@@ -1630,20 +1630,39 @@ async function generateCampaign() {
 
     const rawJson = await callGemini(
       briefingMessages,
-      'Você é especialista em Meta Ads. Gere uma campanha JSON otimizada com base no briefing. Retorne APENAS o JSON puro, sem markdown, sem blocos de código, sem texto antes ou depois.'
+      'Você é especialista em Meta Ads. Gere uma campanha JSON otimizada com base no briefing. Retorne APENAS o JSON puro, sem markdown, sem blocos de código, sem texto antes ou depois. Não use ```json nem ``` no início ou fim. Comece direto com { e termine com }.'
     );
 
     clearInterval(iv);
 
-    // Parse robusto do JSON
+    // Parse robusto — lida com qualquer variação de resposta do Gemini 2.5
     let parsed;
     try {
-      const clean = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      // 1. Remove blocos de código markdown em todas as variações
+      let clean = rawJson
+        .replace(/^```(?:json)?\s*/i, '')   // ```json ou ``` no início
+        .replace(/\s*```\s*$/i, '')          // ``` no fim
+        .replace(/```json/gi, '')            // qualquer ```json no meio
+        .replace(/```/g, '')                 // qualquer ``` restante
+        .trim();
+
+      // 2. Extrai só o objeto JSON caso haja texto antes/depois
+      const firstBrace = clean.indexOf('{');
+      const lastBrace  = clean.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        clean = clean.slice(firstBrace, lastBrace + 1);
+      }
+
       parsed = JSON.parse(clean);
     } catch (e) {
+      // 3. Último recurso: regex greedy para extrair o maior objeto JSON
       const match = rawJson.match(/\{[\s\S]*\}/);
-      if (match) parsed = JSON.parse(match[0]);
-      else throw new Error('JSON inválido retornado pelo Gemini');
+      if (match) {
+        try { parsed = JSON.parse(match[0]); }
+        catch (e2) { throw new Error('Gemini retornou JSON malformado. Tente novamente.'); }
+      } else {
+        throw new Error('Gemini não retornou JSON. Tente novamente.');
+      }
     }
 
     campaignData = parsed;
