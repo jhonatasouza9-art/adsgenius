@@ -1537,7 +1537,9 @@ async function sendMessage() {
     }
   } catch (err) {
     removeTyping();
-    addMessage('ai', '⚠️ Erro ao conectar com o Gemini. Verifique sua chave da API e tente novamente.');
+    const detail = err.message || 'erro desconhecido';
+    addMessage('ai', `⚠️ Erro ao conectar com o Gemini: <em>${detail}</em><br><br>Dicas: verifique se a chave começa com <strong>AIza</strong>, se a API "Generative Language" está habilitada no Google Cloud, e se a chave não tem restrições de domínio.`);
+    document.getElementById('chatMessages').lastElementChild.querySelector('.msg-bubble').style.cssText = 'background:rgba(248,113,113,0.08);border-color:rgba(248,113,113,0.2)';
     document.getElementById('btnSend').disabled = false;
     console.error('Gemini API error:', err);
   }
@@ -1545,33 +1547,58 @@ async function sendMessage() {
 
 // ── Chamada à API do Gemini ─────────────────────────────────
 async function callGemini(history, systemOverride) {
-  const model = 'gemini-2.0-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+  // Tenta modelos em ordem de preferência
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  let lastError = null;
 
-  const body = {
-    system_instruction: {
-      parts: [{ text: systemOverride || SYSTEM_INSTRUCTION }]
-    },
-    contents: history,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 2048
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+
+      const body = {
+        system_instruction: {
+          parts: [{ text: systemOverride || SYSTEM_INSTRUCTION }]
+        },
+        contents: history,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048
+        }
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = data.error?.message || `Erro ${res.status}`;
+        // Se for erro de modelo não disponível, tenta o próximo
+        if (res.status === 404 || msg.includes('not found') || msg.includes('MODEL_NOT_FOUND')) {
+          lastError = new Error(`Modelo ${model} indisponível: ${msg}`);
+          continue;
+        }
+        // Erro de API key ou outro erro definitivo
+        throw new Error(`Gemini API (${model}): ${msg}`);
+      }
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Resposta vazia do Gemini');
+      return text;
+
+    } catch (err) {
+      if (err.message.includes('indisponível')) {
+        lastError = err;
+        continue;
+      }
+      throw err;
     }
-  };
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || 'Gemini API error ' + res.status);
   }
 
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  throw lastError || new Error('Nenhum modelo Gemini disponível');
 }
 
 // ── Geração da campanha ─────────────────────────────────────
