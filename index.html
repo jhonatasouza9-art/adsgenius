@@ -1548,7 +1548,7 @@ async function sendMessage() {
 // ── Chamada à API do Gemini ─────────────────────────────────
 async function callGemini(history, systemOverride) {
   // Tenta modelos em ordem de preferência
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  const models = ['gemini-2.5-flash-preview-04-17', 'gemini-2.5-pro-preview-03-25', 'gemini-2.0-flash'];
   let lastError = null;
 
   for (const model of models) {
