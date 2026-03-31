@@ -1600,6 +1600,105 @@ async function callGemini(history, systemOverride) {
 
   throw lastError || new Error('Nenhum modelo Gemini disponível');
 }
+// ── Chamada dedicada para geração de JSON (sem histórico, sem markdown) ──
+async function callGeminiJson(briefingText) {
+  const models = ['gemini-2.5-flash', 'gemini-2.5-pro'];
+  let lastError = null;
+
+  const prompt = `Você é um especialista sênior em Meta Ads.
+
+Abaixo está um briefing de campanha coletado em conversa com o cliente:
+
+${briefingText}
+
+Com base nesse briefing, gere uma campanha Meta Ads completa, otimizada e estratégica.
+MELHORE e EXPANDA as informações — aplique conhecimento especializado, não copie as respostas.
+
+Retorne APENAS um objeto JSON válido com exatamente esta estrutura:
+
+{
+  "campaign": {
+    "name": "nome profissional da campanha",
+    "objective": "CONVERSIONS",
+    "budget_type": "DAILY",
+    "budget_value": "R$ 100/dia",
+    "period": "30 dias",
+    "start_date": "01/04/2025",
+    "bidding_strategy": "Menor custo (CPA automático)",
+    "strategy_explanation": "Explicação estratégica da campanha em 2-3 frases"
+  },
+  "adsets": [
+    {
+      "name": "Público Principal",
+      "audience_description": "Descrição do público",
+      "age_min": 25,
+      "age_max": 50,
+      "interests": ["interesse1", "interesse2"],
+      "budget_share": "50%",
+      "placements": "Feed + Stories + Reels",
+      "optimization_goal": "CONVERSIONS",
+      "rationale": "Por que esse segmento vai converter"
+    }
+  ],
+  "creative": {
+    "headline": "Headline impactante",
+    "primary_text": "Texto persuasivo do anúncio com gatilhos emocionais.",
+    "call_to_action": "LEARN_MORE",
+    "cta_label": "Saiba Mais"
+  },
+  "audience_tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "tech_settings": {
+    "pixel_events": "Purchase, Lead",
+    "attribution_window": "7 dias após clique",
+    "frequency_cap": "3x por semana",
+    "ab_test_suggestion": "Testar headline A vs B"
+  }
+}`;
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+
+      const body = {
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 3000,
+          responseMimeType: 'application/json'
+        }
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg = data.error?.message || `Erro ${res.status}`;
+        if (res.status === 404 || msg.includes('not found') || msg.includes('no longer available')) {
+          lastError = new Error(msg); continue;
+        }
+        throw new Error(`Gemini (${model}): ${msg}`);
+      }
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Resposta vazia do Gemini');
+      return text;
+
+    } catch (err) {
+      if (err.message.includes('not found') || err.message.includes('no longer available')) {
+        lastError = err; continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError || new Error('Nenhum modelo Gemini disponível');
+}
+
 
 // ── Geração da campanha ─────────────────────────────────────
 async function generateCampaign() {
@@ -1622,46 +1721,44 @@ async function generateCampaign() {
   }, 1400);
 
   try {
-    // Adiciona o prompt de geração como última mensagem do usuário
-    const briefingMessages = [
-      ...conversationHistory,
-      { role: 'user', parts: [{ text: CAMPAIGN_GENERATION_PROMPT }] }
-    ];
+    // Extrai o texto do briefing do histórico de conversa
+    const briefingText = conversationHistory
+      .map(m => {
+        const role = m.role === 'model' ? 'IA' : 'Cliente';
+        return `${role}: ${m.parts[0].text}`;
+      })
+      .join('\n\n');
 
-    const rawJson = await callGemini(
-      briefingMessages,
-      'Você é especialista em Meta Ads. Gere uma campanha JSON otimizada com base no briefing. Retorne APENAS o JSON puro, sem markdown, sem blocos de código, sem texto antes ou depois. Não use ```json nem ``` no início ou fim. Comece direto com { e termine com }.'
-    );
+    // Chama o Gemini numa requisição limpa e dedicada para geração de JSON
+    // Usa responseMimeType para forçar JSON puro sem markdown
+    const rawJson = await callGeminiJson(briefingText);
 
     clearInterval(iv);
 
-    // Parse robusto — lida com qualquer variação de resposta do Gemini 2.5
+    // Parse robusto — lida com qualquer variação residual
     let parsed;
     try {
-      // 1. Remove blocos de código markdown em todas as variações
       let clean = rawJson
-        .replace(/^```(?:json)?\s*/i, '')   // ```json ou ``` no início
-        .replace(/\s*```\s*$/i, '')          // ``` no fim
-        .replace(/```json/gi, '')            // qualquer ```json no meio
-        .replace(/```/g, '')                 // qualquer ``` restante
+        .replace(/^```(?:json)?\s*/im, '')
+        .replace(/\s*```\s*$/im, '')
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
         .trim();
 
-      // 2. Extrai só o objeto JSON caso haja texto antes/depois
       const firstBrace = clean.indexOf('{');
       const lastBrace  = clean.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      if (firstBrace !== -1 && lastBrace !== -1) {
         clean = clean.slice(firstBrace, lastBrace + 1);
       }
 
       parsed = JSON.parse(clean);
     } catch (e) {
-      // 3. Último recurso: regex greedy para extrair o maior objeto JSON
       const match = rawJson.match(/\{[\s\S]*\}/);
       if (match) {
         try { parsed = JSON.parse(match[0]); }
-        catch (e2) { throw new Error('Gemini retornou JSON malformado. Tente novamente.'); }
+        catch (e2) { throw new Error('JSON malformado. Tente novamente.'); }
       } else {
-        throw new Error('Gemini não retornou JSON. Tente novamente.');
+        throw new Error('Gemini não retornou JSON válido. Tente novamente.');
       }
     }
 
