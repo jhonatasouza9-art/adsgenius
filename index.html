@@ -1912,7 +1912,40 @@ async function createMetaCampaign(token, adAccountId) {
 
   const c = campaignData.campaign;
   const accountId = adAccountId.startsWith('act_') ? adAccountId : 'act_' + adAccountId;
-  const baseUrl = `https://graph.facebook.com/v19.0`;
+  const baseUrl = `https://graph.facebook.com/v21.0`;
+
+  // Mapa de objetivos antigos → novos OUTCOME_ (API v21+)
+  const objectiveMap = {
+    'CONVERSIONS':        'OUTCOME_SALES',
+    'LINK_CLICKS':        'OUTCOME_TRAFFIC',
+    'LEAD_GENERATION':    'OUTCOME_LEADS',
+    'BRAND_AWARENESS':    'OUTCOME_AWARENESS',
+    'VIDEO_VIEWS':        'OUTCOME_AWARENESS',
+    'POST_ENGAGEMENT':    'OUTCOME_ENGAGEMENT',
+    'APP_INSTALLS':       'OUTCOME_APP_PROMOTION',
+    'REACH':              'OUTCOME_AWARENESS',
+    'MESSAGES':           'OUTCOME_ENGAGEMENT',
+    // Já no formato novo — passa direto
+    'OUTCOME_SALES':           'OUTCOME_SALES',
+    'OUTCOME_TRAFFIC':         'OUTCOME_TRAFFIC',
+    'OUTCOME_LEADS':           'OUTCOME_LEADS',
+    'OUTCOME_AWARENESS':       'OUTCOME_AWARENESS',
+    'OUTCOME_ENGAGEMENT':      'OUTCOME_ENGAGEMENT',
+    'OUTCOME_APP_PROMOTION':   'OUTCOME_APP_PROMOTION',
+  };
+
+  const rawObjective = (c.objective || 'OUTCOME_SALES').toUpperCase().trim();
+  const objective = objectiveMap[rawObjective] || 'OUTCOME_SALES';
+
+  // Mapa optimization_goal por objetivo
+  const optimizationMap = {
+    'OUTCOME_SALES':         'OFFSITE_CONVERSIONS',
+    'OUTCOME_TRAFFIC':       'LINK_CLICKS',
+    'OUTCOME_LEADS':         'LEAD_GENERATION',
+    'OUTCOME_AWARENESS':     'REACH',
+    'OUTCOME_ENGAGEMENT':    'POST_ENGAGEMENT',
+    'OUTCOME_APP_PROMOTION': 'APP_INSTALLS',
+  };
 
   // 1. Criar Campanha
   const campaignRes = await fetch(`${baseUrl}/${accountId}/campaigns`, {
@@ -1920,7 +1953,7 @@ async function createMetaCampaign(token, adAccountId) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: c.name,
-      objective: c.objective,
+      objective,
       status: 'PAUSED',
       special_ad_categories: [],
       access_token: token
@@ -1936,11 +1969,14 @@ async function createMetaCampaign(token, adAccountId) {
   const pixelId = document.getElementById('pixelId').value.trim() || null;
 
   for (const adset of adsets) {
+    // optimization_goal compatível com o objetivo da campanha
+    const adsetOptGoal = optimizationMap[objective] || 'LINK_CLICKS';
+
     const adsetBody = {
       name: adset.name,
       campaign_id: campaignId,
       status: 'PAUSED',
-      optimization_goal: adset.optimization_goal || 'LINK_CLICKS',
+      optimization_goal: adsetOptGoal,
       billing_event: 'IMPRESSIONS',
       bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
       daily_budget: Math.round((parseFloat((c.budget_value || '100').replace(/[^\d.]/g, '')) / (adsets.length || 1)) * 100),
